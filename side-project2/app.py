@@ -68,6 +68,15 @@ def get_gemini_response(image_data):
             "health": "Unknown",
             "tip": "Could not analyze this image. Please try again."
         }
+from flask import send_from_directory
+
+@app.route("/")
+def home():
+    return send_from_directory("static", "index.html")
+    
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory('static', path)
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -79,4 +88,4 @@ def analyze():
     return jsonify(analysis)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run()
