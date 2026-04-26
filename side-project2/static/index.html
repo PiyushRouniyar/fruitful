@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruitful - AI Food Scanner & Nutrition Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Floating shapes for fruity vibe -->
+        <div class="bg-shape shape-1"></div>
+        <div class="bg-shape shape-2"></div>
+        <div class="bg-shape shape-3"></div>
+        
+        <!-- Floating Interactive Foods -->
+        <div id="floating-foods-container">
+            <div class="food-wrapper"><div class="food-item">🍎</div></div>
+            <div class="food-wrapper"><div class="food-item">🥦</div></div>
+            <div class="food-wrapper"><div class="food-item">🍕</div></div>
+            <div class="food-wrapper"><div class="food-item">🥕</div></div>
+            <div class="food-wrapper"><div class="food-item">🥑</div></div>
+            <div class="food-wrapper"><div class="food-item">🍓</div></div>
+            <div class="food-wrapper"><div class="food-item">🍗</div></div>
+            <div class="food-wrapper"><div class="food-item">🥗</div></div>
+        </div>
+
+        <header>
+            <div class="logo">
+                <i class="fas fa-apple-whole"></i>
+                <h1 id="app-title">Fruitful</h1>
+            </div>
+            <div class="header-actions">
+                <div class="streak-badge-header" id="streak-header">
+                    <i class="fas fa-fire streak-flame"></i>
+                    <span id="streak-count-header">0</span>
+                </div>
+                <div class="user-greeting" id="user-display">
+                    <span id="greeting-text">Hello,</span>
+                    <span id="username-val">Guest</span>
+                </div>
+                <button id="lang-toggle" class="btn-icon">
+                    <span id="lang-text">EN</span>
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Scanner Section -->
+            <section class="scanner-section">
+                <div class="card scanner-card">
+                    <div class="camera-container">
+                        <video id="camera-preview" autoplay playsinline muted></video>
+                        <canvas id="capture-canvas" style="display:none;"></canvas>
+                        <div class="camera-overlay">
+                            <div class="scan-frame"></div>
+                        </div>
+                        <div id="scan-loading" class="loading-overlay" style="display:none;">
+                            <div class="spinner"></div>
+                            <p id="loading-msg" data-i18n="analyzing">Analyzing your meal...</p>
+                        </div>
+                    </div>
+                    <div class="scanner-controls">
+                        <input type="file" id="file-input" accept="image/*" style="display:none;">
+                        <button id="upload-btn" class="btn secondary">
+                            <i class="fas fa-image"></i>
+                            <span data-i18n="upload">Upload</span>
+                        </button>
+                        <button id="scan-btn" class="btn primary large">
+                            <i class="fas fa-camera"></i>
+                            <span data-i18n="scan">Scan Meal</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard Section -->
+            <section class="dashboard-section">
+                <div class="section-header">
+                    <h2 data-i18n="daily_tracker">Daily Tracker</h2>
+                    <div class="streak-badge">
+                        <i class="fas fa-fire"></i>
+                        <span id="streak-count">0</span> Day Streak
+                    </div>
+                </div>
+
+                <div class="calories-container card">
+                    <div class="calories-main">
+                        <div class="calories-ring">
+                            <svg viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="45" class="ring-bg"></circle>
+                                <circle cx="50" cy="50" r="45" class="ring-progress" id="cal-progress-ring"></circle>
+                            </svg>
+                            <div class="calories-content">
+                                <span id="cal-current">0</span>
+                                <small>/ <span id="cal-goal">2000</span></small>
+                                <label>kcal</label>
+                            </div>
+                        </div>
+                        <div class="calories-info">
+                            <div class="insight-pill" id="daily-insight">
+                                <i class="fas fa-lightbulb"></i>
+                                <span>Scanning your first meal...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="macros-grid">
+                        <div class="macro-item">
+                            <div class="macro-label">
+                                <span data-i18n="protein">Protein</span>
+                                <span><span id="pro-current">0</span>g / <span id="pro-goal">150</span>g</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress pro-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="macro-item">
+                            <div class="macro-label">
+                                <span data-i18n="carbs">Carbs</span>
+                                <span><span id="carb-current">0</span>g / <span id="carb-goal">250</span>g</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress carb-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="macro-item">
+                            <div class="macro-label">
+                                <span data-i18n="fat">Fat</span>
+                                <span><span id="fat-current">0</span>g / <span id="fat-goal">70</span>g</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress fat-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="set-goals-btn" class="btn text-btn">
+                        <i class="fas fa-cog"></i> <span data-i18n="set_goals">Set Goals</span>
+                    </button>
+                </div>
+                
+                <button id="view-weekly-btn" class="btn secondary full weekly-btn">
+                    <i class="fas fa-chart-line"></i> <span data-i18n="view_report">View Weekly Report</span>
+                </button>
+            </section>
+
+            <!-- Calendar Section -->
+            <section class="calendar-section">
+                <div class="card calendar-card">
+                    <div class="week-row" id="calendar-week">
+                        <!-- JS will populate -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Section -->
+            <section class="history-section">
+                <div class="section-header">
+                    <h2 data-i18n="history">History</h2>
+                </div>
+                <div class="history-list" id="history-list">
+                    <!-- JS will populate -->
+                    <div class="empty-state">
+                        <p data-i18n="no_meals">No meals tracked yet today.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Weight Tracker Section -->
+            <section class="weight-section">
+                <div class="card weight-card">
+                    <div class="weight-header">
+                        <h3 data-i18n="weight_tracker">Weight Tracker</h3>
+                        <div class="weight-input-group">
+                            <input type="number" id="weight-input" placeholder="0.0" step="0.1">
+                            <span>kg</span>
+                            <button id="save-weight-btn" class="btn-icon circle">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="weight-trend" id="weight-trend-msg">
+                        Track your daily weight to see trends.
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Result Modal -->
+        <div id="result-modal" class="modal">
+            <div class="modal-content result-card card animate-pop">
+                <button class="close-btn" id="close-result">&times;</button>
+                <div class="result-header">
+                    <div class="result-img-container">
+                        <img id="result-img" src="" alt="Scanned Food">
+                    </div>
+                    <div class="result-title">
+                        <h2 id="res-food-name">Green Salad</h2>
+                        <span id="res-health-badge" class="badge">Healthy</span>
+                    </div>
+                </div>
+                <div class="result-stats">
+                    <div class="stat-item">
+                        <span id="res-cal">0</span>
+                        <label>kcal</label>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span id="res-pro">0</span>g
+                        <label>Protein</label>
+                    </div>
+                    <div class="stat-item">
+                        <span id="res-carb">0</span>g
+                        <label>Carbs</label>
+                    </div>
+                    <div class="stat-item">
+                        <span id="res-fat">0</span>g
+                        <label>Fat</label>
+                    </div>
+                </div>
+                <div class="result-tip">
+                    <i class="fas fa-magic"></i>
+                    <p id="res-tip">Add some lemon juice for more vitamin C!</p>
+                </div>
+
+                <!-- Improve Meal Panel -->
+                <div id="improve-panel" class="improve-panel">
+                    <h3 class="panel-title">Smart Suggestions</h3>
+                    <div id="suggestions-list" class="suggestions-list">
+                        <!-- Staggered cards will be injected here -->
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="improve-meal-btn" class="btn secondary full">
+                        <i class="fas fa-wand-magic-sparkles"></i> <span data-i18n="improve_meal">Improve Meal</span>
+                    </button>
+                    <button id="add-to-log-btn" class="btn primary full">
+                        <i class="fas fa-plus"></i> <span data-i18n="add_to_log">Add to Tracker</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Goal Modal -->
+        <div id="goal-modal" class="modal">
+            <div class="modal-content card animate-pop">
+                <h2 data-i18n="set_goals">Nutrition Goals</h2>
+                
+                <div class="goal-modes">
+                    <label>Goal Mode</label>
+                    <div class="mode-cards">
+                        <div class="mode-card active" data-mode="maintain">
+                            <i class="fas fa-balance-scale"></i>
+                            <span>Maintain</span>
+                        </div>
+                        <div class="mode-card" data-mode="loss">
+                            <i class="fas fa-weight"></i>
+                            <span>Loss</span>
+                        </div>
+                        <div class="mode-card" data-mode="gain">
+                            <i class="fas fa-dumbbell"></i>
+                            <span>Gain</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Daily Calories (kcal)</label>
+                    <input type="number" id="goal-cal-input" value="2000">
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Protein (g)</label>
+                        <input type="number" id="goal-pro-input" value="150">
+                    </div>
+                    <div class="form-group">
+                        <label>Carbs (g)</label>
+                        <input type="number" id="goal-carb-input" value="250">
+                    </div>
+                    <div class="form-group">
+                        <label>Fat (g)</label>
+                        <input type="number" id="goal-fat-input" value="70">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="close-goals" class="btn secondary">Cancel</button>
+                    <button id="save-goals" class="btn primary">Save Goals</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Report Modal -->
+        <div id="weekly-modal" class="modal">
+            <div class="modal-content card animate-pop report-modal">
+                <button class="close-btn" id="close-weekly">&times;</button>
+                <h2>Weekly Report</h2>
+                <div class="report-stats">
+                    <div class="report-stat">
+                        <label>Avg Calories</label>
+                        <span id="avg-cal">0</span>
+                    </div>
+                    <div class="report-stat">
+                        <label>Protein Trend</label>
+                        <span id="pro-trend">Stable</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="weekly-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Name Input Modal (First Visit) -->
+        <div id="name-modal" class="modal" style="display:none;">
+            <div class="modal-content card animate-pop">
+                <h2>Welcome to Fruitful!</h2>
+                <p>What should we call you?</p>
+                <div class="form-group">
+                    <input type="text" id="name-input" placeholder="Enter your name">
+                </div>
+                <button id="save-name" class="btn primary full">Get Started</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+
+    <!-- Interactive Watermark -->
+    <div id="watermark" class="watermark-container">
+        <span class="watermark-text">Made with ❤️ by <span class="author">piyushh_ackerman</span></span>
+        <div class="surprise-msg">🚀 YOU FOUND THE SECRET! 🌈</div>
+    </div>
+</body>
+</html>
