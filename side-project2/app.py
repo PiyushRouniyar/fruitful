@@ -18,7 +18,7 @@ if not GEMINI_API_KEY:
     print("WARNING: GEMINI_API_KEY not found in environment variables.")
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-3.1-flash-lite-preview'')
 
 # Prompt for Food Analysis
 PROMPT = """
