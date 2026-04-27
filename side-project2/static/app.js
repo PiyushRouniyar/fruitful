@@ -178,10 +178,18 @@ async function initCamera() {
 
 function captureImage() {
     const context = canvas.getContext('2d');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.8);
+
+    // 🔥 FIX: reduce size to prevent timeout
+    const width = 300;
+    const height = 300;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    context.drawImage(video, 0, 0, width, height);
+
+    // 🔥 compress image quality
+    return canvas.toDataURL('image/jpeg', 0.6);
 }
 
 async function analyzeMeal(imageData) {
@@ -360,17 +368,36 @@ async function saveWeight() {
 }
 
 // --- EVENT LISTENERS ---
-function setupEventListeners() {
-    scanBtn.onclick = () => analyzeMeal(captureImage());
-    uploadBtn.onclick = () => fileInput.click();
-    fileInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => analyzeMeal(event.target.result);
-            reader.readAsDataURL(file);
-        }
-    };
+fileInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const img = new Image();
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+
+                const width = 300;
+                const height = 300;
+
+                canvas.width = width;
+                canvas.height = height;
+
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const compressed = canvas.toDataURL("image/jpeg", 0.6);
+
+                analyzeMeal(compressed);
+            };
+
+            img.src = event.target.result;
+        };
+
+        reader.readAsDataURL(file);
+    }
+};
     document.getElementById('close-result').onclick = () => resultModal.classList.remove('active');
     document.getElementById('add-to-log-btn').onclick = () => addMealToHistory(JSON.parse(resultModal.dataset.currentMeal), resultModal.dataset.currentImg);
     document.getElementById('set-goals-btn').onclick = () => {
