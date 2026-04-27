@@ -16,8 +16,6 @@ CORS(app)
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def get_gemini_response(image_data):
-    model = genai.GenerativeModel('gemini-3.1-flash-lite-preview')
-    
     prompt = """
     Analyze this food image and provide nutritional information.
     Return ONLY a JSON object with the following structure:
@@ -44,30 +42,53 @@ def get_gemini_response(image_data):
             "data": image_data
         }
     ]
-    
-    response = model.generate_content([prompt, image_parts[0]])
-    
-    # Try to parse JSON from the response
+
+    # 🥇 FIRST TRY: 3.1 Flash Lite (your current model)
     try:
+        print("Trying 3.1 Flash Lite...")
+        model = genai.GenerativeModel('gemini-3.1-flash-lite-preview')
+        response = model.generate_content([prompt, image_parts[0]])
+
         text = response.text.strip()
-        # Remove markdown code blocks if present
+
         if text.startswith("```json"):
             text = text[7:-3].strip()
         elif text.startswith("```"):
             text = text[3:-3].strip()
-        
+
         return json.loads(text)
+
     except Exception as e:
-        print(f"Error parsing Gemini response: {e}")
-        return {
-            "name": "Unknown Food",
-            "calories": 0,
-            "protein": 0,
-            "carbs": 0,
-            "fat": 0,
-            "health": "Unknown",
-            "tip": "Could not analyze this image. Please try again."
-        }
+        print("3.1 failed:", e)
+
+    # 🥈 FALLBACK: 2.5 Flash (only if first fails)
+    try:
+        print("Trying 2.5 Flash fallback...")
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        response = model.generate_content([prompt, image_parts[0]])
+
+        text = response.text.strip()
+
+        if text.startswith("```json"):
+            text = text[7:-3].strip()
+        elif text.startswith("```"):
+            text = text[3:-3].strip()
+
+        return json.loads(text)
+
+    except Exception as e:
+        print("2.5 also failed:", e)
+
+    # 🧯 FINAL SAFE RESPONSE (unchanged style)
+    return {
+        "name": "Unknown Food",
+        "calories": 0,
+        "protein": 0,
+        "carbs": 0,
+        "fat": 0,
+        "health": "Unknown",
+        "tip": "Could not analyze this image. Please try again."
+    }
 from flask import send_from_directory
 
 @app.route("/")
