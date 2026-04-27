@@ -178,21 +178,10 @@ async function initCamera() {
 
 function captureImage() {
     const context = canvas.getContext('2d');
-
-    // 🔥 use actual video size
-    const width = video.videoWidth || 300;
-    const height = video.videoHeight || 300;
-
-    // 🔥 scale down more (IMPORTANT)
-    const scale = 0.3;
-
-    canvas.width = width * scale;
-    canvas.height = height * scale;
-
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    // 🔥 slightly more compression
-    return canvas.toDataURL('image/jpeg', 0.5);
+    return canvas.toDataURL('image/jpeg', 0.8);
 }
 
 async function analyzeMeal(imageData) {
@@ -371,36 +360,17 @@ async function saveWeight() {
 }
 
 // --- EVENT LISTENERS ---
-fileInput.onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        const img = new Image();
-        const reader = new FileReader();
-
-        reader.onload = (event) => {
-            img.onload = () => {
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext("2d");
-
-                const width = 300;
-                const height = 300;
-
-                canvas.width = width;
-                canvas.height = height;
-
-                ctx.drawImage(img, 0, 0, width, height);
-
-                const compressed = canvas.toDataURL("image/jpeg", 0.6);
-
-                analyzeMeal(compressed);
-            };
-
-            img.src = event.target.result;
-        };
-
-        reader.readAsDataURL(file);
-    }
-};
+function setupEventListeners() {
+    scanBtn.onclick = () => analyzeMeal(captureImage());
+    uploadBtn.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => analyzeMeal(event.target.result);
+            reader.readAsDataURL(file);
+        }
+    };
     document.getElementById('close-result').onclick = () => resultModal.classList.remove('active');
     document.getElementById('add-to-log-btn').onclick = () => addMealToHistory(JSON.parse(resultModal.dataset.currentMeal), resultModal.dataset.currentImg);
     document.getElementById('set-goals-btn').onclick = () => {
