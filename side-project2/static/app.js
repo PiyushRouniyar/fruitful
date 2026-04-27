@@ -197,7 +197,7 @@ async function analyzeMeal(imageData) {
         showResult(data, imageData);
     } catch (err) {
         console.error("Analysis failed:", err);
-        alert("Many People are using! Server is busy....);
+        alert("Many People are using! Server is busy....");
     } finally {
         showLoading(false);
     }
