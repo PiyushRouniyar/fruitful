@@ -179,17 +179,20 @@ async function initCamera() {
 function captureImage() {
     const context = canvas.getContext('2d');
 
-    // 🔥 FIX: reduce size to prevent timeout
-    const width = 300;
-    const height = 300;
+    // 🔥 use actual video size
+    const width = video.videoWidth || 300;
+    const height = video.videoHeight || 300;
 
-    canvas.width = width;
-    canvas.height = height;
+    // 🔥 scale down more (IMPORTANT)
+    const scale = 0.3;
 
-    context.drawImage(video, 0, 0, width, height);
+    canvas.width = width * scale;
+    canvas.height = height * scale;
 
-    // 🔥 compress image quality
-    return canvas.toDataURL('image/jpeg', 0.6);
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // 🔥 slightly more compression
+    return canvas.toDataURL('image/jpeg', 0.5);
 }
 
 async function analyzeMeal(imageData) {
