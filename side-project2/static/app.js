@@ -181,7 +181,7 @@ function captureImage() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.8);
+    return canvas.toDataURL('image/jpeg', 0.6);
 }
 
 async function analyzeMeal(imageData) {
@@ -197,7 +197,7 @@ async function analyzeMeal(imageData) {
         showResult(data, imageData);
     } catch (err) {
         console.error("Analysis failed:", err);
-        alert("Failed to analyze food. Make sure the backend is running.");
+        alert("Many People are using! Server is busy....);
     } finally {
         showLoading(false);
     }
