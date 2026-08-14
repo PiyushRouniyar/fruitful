@@ -23,7 +23,6 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const BACKEND_URL = '/analyze';
-const MANUAL_URL = '/analyze-text';
 
 // Global State
 let state = {
@@ -200,19 +199,12 @@ async function analyzeMeal(imageData) {
         const data = await response.json().catch(() => ({}));
 
         if (data.error === "MISSING_API_KEY") {
-            alert(data.details || "API keys (GEMINI_API_KEY / FATSECRET_KEY) are missing in Vercel Environment Variables.");
+            alert("GEMINI_API_KEY is missing in Vercel Environment Variables.");
             return;
         }
 
         if (data.error === "AI_FAILED") {
-            alert("Could not detect food from image. Enter food name manually.");
-            showManualInput();
-            return;
-        }
-
-        if (data.error === "NUTRITION_FAILED") {
-            alert("Could not fetch nutrition data. Try another food or manual search.");
-            showManualInput();
+            alert("Could not analyze food image. Please try taking another picture.");
             return;
         }
 
@@ -223,53 +215,6 @@ async function analyzeMeal(imageData) {
         showResult(data, imageData);
     } catch (err) {
         console.error("Analysis failed:", err);
-        alert(err.message || "Server busy, try again");
-    } finally {
-        showLoading(false);
-    }
-}
-
-function showManualInput() {
-    manualModal.classList.add('active');
-    manualModal.style.display = 'flex';
-}
-
-async function searchManualFood() {
-    const foodName = manualInput.value.trim();
-    if (!foodName) return;
-
-    showLoading(true);
-    manualModal.classList.remove('active');
-    manualModal.style.display = 'none';
-
-    try {
-        const response = await fetch(MANUAL_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: foodName })
-        });
-        
-        const data = await response.json().catch(() => ({}));
-        
-        if (data.error === "MISSING_API_KEY") {
-            alert(data.details || "FatSecret credentials are missing in Vercel Environment Variables.");
-            return;
-        }
-
-        if (data.error === "NUTRITION_FAILED") {
-            alert("Could not fetch nutrition. Try another food.");
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(data.message || data.error || "Backend server error (" + response.status + ")");
-        }
-
-        // For manual search, we don't have a camera image, so use a placeholder or generic food icon
-        const placeholderImg = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=200&auto=format&fit=crop";
-        showResult(data, placeholderImg);
-    } catch (err) {
-        console.error("Manual search failed:", err);
         alert(err.message || "Server busy, try again");
     } finally {
         showLoading(false);
