@@ -129,12 +129,9 @@ def get_food_name_from_gemini(image_data):
         prompt = "Identify the food item in this image. Return ONLY the food name. No explanation."
         
         model_names = [
-            'gemini-1.5-flash-latest',
-            'gemini-1.5-flash',
-            'gemini-2.0-flash-exp',
-            'gemini-1.5-pro-latest',
-            'gemini-1.5-pro',
-            'gemini-pro-vision'
+            'gemini-3.1-flash-lite',
+            'gemini-1.5-flash-lite',
+            'gemini-2.0-flash-lite'
         ]
         for model_name in model_names:
             try:
