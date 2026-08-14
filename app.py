@@ -115,9 +115,6 @@ def get_food_name_from_gemini(image_data):
 
     try:
         genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        prompt = "Identify the food item in this image. Return ONLY the food name. No explanation."
-        
         mime_type = "image/jpeg"
         if "," in image_data:
             header, image_data = image_data.split(",", 1)
@@ -129,11 +126,27 @@ def get_food_name_from_gemini(image_data):
                 mime_type = "image/gif"
         
         image_bytes = base64.b64decode(image_data)
-        image_parts = [{"mime_type": mime_type, "data": image_bytes}]
-        response = model.generate_content([prompt, image_parts[0]])
+        prompt = "Identify the food item in this image. Return ONLY the food name. No explanation."
         
-        if response and response.text:
-            return response.text.strip()
+        model_names = [
+            'gemini-1.5-flash-latest',
+            'gemini-1.5-flash',
+            'gemini-2.0-flash-exp',
+            'gemini-1.5-pro-latest',
+            'gemini-1.5-pro',
+            'gemini-pro-vision'
+        ]
+        for model_name in model_names:
+            try:
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content([prompt, {"mime_type": mime_type, "data": image_bytes}])
+                if response and response.text:
+                    logger.info(f"Gemini success using model {model_name}: {response.text.strip()}")
+                    return response.text.strip()
+            except Exception as model_err:
+                logger.warning(f"Gemini model {model_name} failed: {model_err}")
+                continue
+
         return None
     except Exception as e:
         logger.error(f"Gemini Exception: {e}")
@@ -165,21 +178,32 @@ def analyze():
         data = request.get_json(silent=True)
         if not data or 'image' not in data or not data['image']:
             return jsonify({"error": "No image data provided"}), 400
+
+        gemini_key = os.environ.get("GEMINI_API_KEY", GEMINI_API_KEY)
+        if not gemini_key:
+            logger.error("GEMINI_API_KEY is not configured on server")
+            return jsonify({"error": "MISSING_API_KEY", "details": "GEMINI_API_KEY environment variable is not configured on Vercel"}), 200
         
         food_name = get_food_name_from_gemini(data['image'])
         
         if not food_name:
-            return jsonify({"error": "AI_FAILED"}), 500
+            return jsonify({"error": "AI_FAILED"}), 200
+
+        fatsecret_key = os.environ.get("FATSECRET_KEY", FATSECRET_KEY)
+        fatsecret_secret = os.environ.get("FATSECRET_SECRET", FATSECRET_SECRET)
+        if not fatsecret_key or not fatsecret_secret:
+            logger.error("FATSECRET keys are not configured on server")
+            return jsonify({"error": "MISSING_API_KEY", "details": "FATSECRET credentials environment variables are not configured on Vercel"}), 200
         
         nutrition = get_fatsecret_nutrition(food_name)
         
         if not nutrition:
-            return jsonify({"error": "NUTRITION_FAILED"}), 404
+            return jsonify({"error": "NUTRITION_FAILED"}), 200
             
         return jsonify(nutrition), 200
     except Exception as e:
         logger.error(f"Route /analyze error: {e}")
-        return jsonify({"error": "NUTRITION_FAILED"}), 500
+        return jsonify({"error": "NUTRITION_FAILED"}), 200
 
 @app.route('/analyze-text', methods=['POST'])
 def analyze_text():
@@ -187,15 +211,21 @@ def analyze_text():
         data = request.get_json(silent=True)
         if not data or 'name' not in data or not data['name']:
             return jsonify({"error": "No food name provided"}), 400
+
+        fatsecret_key = os.environ.get("FATSECRET_KEY", FATSECRET_KEY)
+        fatsecret_secret = os.environ.get("FATSECRET_SECRET", FATSECRET_SECRET)
+        if not fatsecret_key or not fatsecret_secret:
+            logger.error("FATSECRET keys are not configured on server")
+            return jsonify({"error": "MISSING_API_KEY", "details": "FATSECRET credentials environment variables are not configured on Vercel"}), 200
         
         nutrition = get_fatsecret_nutrition(data['name'])
         if not nutrition:
-            return jsonify({"error": "NUTRITION_FAILED"}), 404
+            return jsonify({"error": "NUTRITION_FAILED"}), 200
             
         return jsonify(nutrition), 200
     except Exception as e:
         logger.error(f"Route /analyze-text error: {e}")
-        return jsonify({"error": "NUTRITION_FAILED"}), 500
+        return jsonify({"error": "NUTRITION_FAILED"}), 200
 
 @app.errorhandler(404)
 def not_found(e):

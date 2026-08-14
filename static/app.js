@@ -196,24 +196,34 @@ async function analyzeMeal(imageData) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ image: imageData })
         });
-        if (!response.ok) throw new Error("Backend error");
-        const data = await response.json();
+        
+        const data = await response.json().catch(() => ({}));
+
+        if (data.error === "MISSING_API_KEY") {
+            alert(data.details || "API keys (GEMINI_API_KEY / FATSECRET_KEY) are missing in Vercel Environment Variables.");
+            return;
+        }
 
         if (data.error === "AI_FAILED") {
-            alert("Could not detect food. Enter manually.");
+            alert("Could not detect food from image. Enter food name manually.");
             showManualInput();
             return;
         }
 
         if (data.error === "NUTRITION_FAILED") {
-            alert("Could not fetch nutrition. Try another food.");
+            alert("Could not fetch nutrition data. Try another food or manual search.");
+            showManualInput();
             return;
+        }
+
+        if (!response.ok) {
+            throw new Error(data.message || data.error || "Backend server error (" + response.status + ")");
         }
 
         showResult(data, imageData);
     } catch (err) {
         console.error("Analysis failed:", err);
-        alert("Server busy, try again");
+        alert(err.message || "Server busy, try again");
     } finally {
         showLoading(false);
     }
@@ -239,13 +249,20 @@ async function searchManualFood() {
             body: JSON.stringify({ name: foodName })
         });
         
-        if (!response.ok) throw new Error("Backend error");
+        const data = await response.json().catch(() => ({}));
         
-        const data = await response.json();
-        
+        if (data.error === "MISSING_API_KEY") {
+            alert(data.details || "FatSecret credentials are missing in Vercel Environment Variables.");
+            return;
+        }
+
         if (data.error === "NUTRITION_FAILED") {
             alert("Could not fetch nutrition. Try another food.");
             return;
+        }
+
+        if (!response.ok) {
+            throw new Error(data.message || data.error || "Backend server error (" + response.status + ")");
         }
 
         // For manual search, we don't have a camera image, so use a placeholder or generic food icon
@@ -253,7 +270,7 @@ async function searchManualFood() {
         showResult(data, placeholderImg);
     } catch (err) {
         console.error("Manual search failed:", err);
-        alert("Server busy, try again");
+        alert(err.message || "Server busy, try again");
     } finally {
         showLoading(false);
     }
