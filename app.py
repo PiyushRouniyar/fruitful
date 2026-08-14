@@ -152,6 +152,13 @@ def health_check():
         "fatsecret_configured": bool(os.environ.get("FATSECRET_KEY") and os.environ.get("FATSECRET_SECRET"))
     }), 200
 
+@app.route('/<path:path>')
+def serve_static(path):
+    static_file_path = os.path.join('static', path)
+    if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
+        return send_from_directory('static', path)
+    return send_from_directory('static', 'index.html')
+
 @app.route('/analyze', methods=['POST'])
 def analyze():
     try:
